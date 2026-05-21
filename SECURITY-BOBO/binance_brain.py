@@ -1,6 +1,6 @@
 import time
 import logging
-import config
+import threading
 from binance_api import BinanceClient
 from database import Database
 from professor import Professor
@@ -8,71 +8,54 @@ from titan import Titan
 from mergan import Mergan
 from boss import Boss
 from nazoratchi import Nazoratchi
+import config
 
-# SECURITY-BOBO Asosiy Boshqaruv Markazi (Binance Brain)
-# Barcha agentlarni swarm sifatida birlashtiradi
-
-# Loglarni sozlash
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("security_bobo.log"),
-        logging.StreamHandler()
-    ]
-)
+# Global Brain Instance for API access
+brain_instance = None
 
 class BinanceBrain:
     def __init__(self):
-        self.logger = logging.getLogger("BinanceBrain")
-        self.logger.info(config.STATUS_MESSAGES["START"])
-
-        # Modullarni yuklash
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.logger = logging.getLogger("Brain")
         self.binance = BinanceClient()
-        self.db = Database()
-
-        # Agentlarni yuklash
+        self.db = Database(config.DB_PATH)
         self.professor = Professor(self.binance)
         self.titan = Titan(self.binance, self.db)
         self.mergan = Mergan(self.binance, self.db)
         self.boss = Boss(self.binance, self.db)
-        self.nazoratchi = Nazoratchi(self.professor, self.titan)
-
-        # Auto-Resume: Ochiq pozitsiyalarni tiklash
-        self.boss.auto_resume()
+        self.nazoratchi = Nazoratchi(self.professor, self.titan, self.boss, self.db)
+        self.is_running = True
 
     def run(self):
-        """Asosiy tsikl"""
-        while True:
+        self.logger.info(config.STATUS_MESSAGES["START"])
+        self.boss.auto_resume()
+
+        while self.is_running:
             try:
-                for symbol in config.SYMBOLS:
-                    # 1. PROFESSOR tahlil qiladi
-                    analysis = self.professor.analyze(symbol)
-
-                    if analysis and analysis['signal'] in ["BUY", "SELL"]:
-                        side = analysis['signal']
-                        self.logger.info(f"🎯 Signal aniqlandi: {symbol} -> {side}")
-
-                        # 2. TITAN riskni tekshiradi va lot hajmini hisoblaydi
-                        amount = self.titan.calculate_position_size(symbol, analysis)
-
-                        if self.titan.validate_trade(symbol, side, amount):
-                            # 3. MERGAN savdoni ijro etadi
-                            self.mergan.execute_trade(symbol, side, amount, analysis)
-
-                # 4. BOSS ochiq pozitsiyalarni nazorat qiladi
                 self.boss.monitor_positions()
+                self.nazoratchi.check_heartbeat()
 
-                # 5. NAZORATCHI evolyutsiya o'tkazadi
-                self.nazoratchi.evolve()
+                for symbol in config.SYMBOLS:
+                    analysis = self.professor.analyze(symbol)
+                    if analysis and analysis['signal'] in ['BUY', 'SELL']:
+                        if self.titan.validate_trade(symbol, analysis):
+                            if self.nazoratchi.verify_absolute_facts(symbol, analysis['signal'], analysis['price']):
+                                amount = self.titan.calculate_position_size(symbol, analysis)
+                                if amount > 0:
+                                    self.mergan.execute_trade(symbol, analysis['signal'], amount, analysis)
 
-                # Kutish (Binance API rate limitlariga rioya qilish)
-                time.sleep(10)
-
+                self.nazoratchi.evolve_logic()
+                time.sleep(10) # Optimallashtirilgan tezlik
             except Exception as e:
-                self.logger.error(config.STATUS_MESSAGES["ERROR"] + str(e))
+                self.logger.error(f"Brain Loop Error: {e}")
                 time.sleep(30)
+
+    def stop_and_panic(self):
+        self.logger.warning("🆘 Brain: Panic Signal received!")
+        self.is_running = False
+        self.boss.close_all_on_emergency()
 
 if __name__ == "__main__":
     brain = BinanceBrain()
+    brain_instance = brain
     brain.run()

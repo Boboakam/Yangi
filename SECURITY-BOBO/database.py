@@ -6,8 +6,8 @@ import logging
 # Auto-Resume va savdo tarixini saqlash uchun ishlatiladi
 
 class Database:
-    def __init__(self):
-        self.conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
+    def __init__(self, db_path=config.DB_PATH):
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.create_tables()
         self.logger = logging.getLogger("Database")
