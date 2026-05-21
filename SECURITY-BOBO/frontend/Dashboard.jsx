@@ -1,261 +1,117 @@
 import React, { useState, useEffect } from 'react';
 
-// SECURITY-BOBO Dashboard v5.0
-// Touch-First interfeys (Planshetlar va Sensorli ekranlar uchun optimallashgan)
+// SECURITY-BOBO A1: Touch-First Dashboard
+// Winlator va planshetlar uchun optimallashtirilgan
 
 const Dashboard = () => {
   const [data, setData] = useState({
     balance: 0,
-    status: 'Yuklanmoqda...',
-    active_trades: 0,
-    symbols: []
+    positions: [],
+    status: 'ISHGA TUSHMOQDA',
+    pnl: 0,
+    logs: []
   });
-  const [positions, setPositions] = useState([]);
-  const [lastUpdate, setLastUpdate] = useState(new Date().toLocaleTimeString());
 
+  // Ma'lumotlarni backenddan olish
   const fetchData = async () => {
     try {
-      const res = await fetch('http://localhost:8000/status');
-      const json = await res.json();
-      setData(json);
-
-      const posRes = await fetch('http://localhost:8000/positions');
-      const posJson = await posRes.json();
-      setPositions(posJson);
-      setLastUpdate(new Date().toLocaleTimeString());
+      const response = await fetch('/api/status');
+      const result = await response.json();
+      setData(result);
     } catch (err) {
-      console.error("Ma'lumot olishda xato:", err);
-      setData(prev => ({ ...prev, status: 'XATOLIK: Backend ulanmadi' }));
+      console.error("Backend ulanish xatosi");
     }
   };
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 3000); // 3 soniyada yangilash
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div style={containerStyle}>
-      {/* Header */}
-      <header style={headerStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
-          <div style={pulseIcon}></div>
-          <h1 style={titleStyle}>SECURITY-BOBO <span style={{fontSize: '14px', color: '#8b949e'}}>GODMODE v5</span></h1>
+    <div className="min-h-screen bg-slate-900 text-white font-sans p-4 select-none">
+      {/* Header Section */}
+      <div className="flex justify-between items-center bg-slate-800 p-6 rounded-2xl shadow-xl mb-6">
+        <div>
+          <h1 className="text-3xl font-black text-blue-400">SECURITY-BOBO A1</h1>
+          <p className="text-slate-400 text-lg">Evolutionary AI System</p>
         </div>
-        <p style={{ color: '#8b949e', margin: '5px 0' }}>Binance USDT-M Futures Swarm Trading</p>
-        <span style={{ fontSize: '12px', opacity: 0.6 }}>Oxirgi yangilanish: {lastUpdate}</span>
-      </header>
-
-      {/* Main Stats Grid */}
-      <div style={statsGridStyle}>
-        <div style={cardStyle}>
-          <p style={cardLabelStyle}>💰 HAMYON BALANSI</p>
-          <h2 style={cardValueStyle}>{data.balance.toLocaleString()} <span style={{fontSize: '16px'}}>USDT</span></h2>
-        </div>
-        <div style={{ ...cardStyle, borderColor: data.status === 'RUNNING' ? '#00e676' : '#ff1744' }}>
-          <p style={cardLabelStyle}>📊 TIZIM HOLATI</p>
-          <h2 style={{ ...cardValueStyle, color: data.status === 'RUNNING' ? '#00e676' : '#ff1744' }}>{data.status}</h2>
-        </div>
-        <div style={cardStyle}>
-          <p style={cardLabelStyle}>📉 OCHIQ POZITSIYALAR</p>
-          <h2 style={cardValueStyle}>{data.active_trades}</h2>
+        <div className="text-right">
+          <div className="text-4xl font-mono text-green-400">${data.balance.toFixed(2)}</div>
+          <div className={`text-xl font-bold ${data.pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            Today: {data.pnl >= 0 ? '+' : ''}{data.pnl.toFixed(2)} USDT
+          </div>
         </div>
       </div>
 
-      {/* Active Symbols */}
-      <div style={symbolsContainerStyle}>
-        {data.symbols.map(s => (
-          <div key={s} style={symbolBadgeStyle}>
-            {s.replace('USDT', '')}
+      {/* Main Controls - BIG BUTTONS FOR TOUCH */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <button
+          className="bg-red-600 active:bg-red-800 p-8 rounded-3xl text-3xl font-black shadow-2xl border-b-8 border-red-900 transition-transform active:scale-95"
+          onClick={() => alert('PANIC BUTTON: Hammasi yopilmoqda!')}
+        >
+          🚨 PANIC BUTTON
+        </button>
+        <button
+          className="bg-blue-600 active:bg-blue-800 p-8 rounded-3xl text-3xl font-black shadow-2xl border-b-8 border-blue-900 transition-transform active:scale-95"
+          onClick={() => alert('HISOBOT YUBORILDI')}
+        >
+          📊 STATUS REPORT
+        </button>
+      </div>
+
+      {/* Agent Status Matrix */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {['PROFESSOR', 'TITAN', 'MERGAN', 'BOSS', 'NAZORATCHI'].map((agent) => (
+          <div key={agent} className="bg-slate-800 p-4 rounded-xl text-center border-l-4 border-green-500">
+            <div className="text-xs text-slate-500">{agent}</div>
+            <div className="text-sm font-bold text-green-400">FAOL</div>
           </div>
         ))}
       </div>
 
       {/* Positions Table */}
-      <div style={tableCardStyle}>
-        <h3 style={{ marginBottom: '15px', color: '#2962ff' }}>📝 Faol Pozitsiyalar</h3>
-        {positions.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '40px', color: '#8b949e' }}>Hozircha ochiq pozitsiyalar yo'q.</p>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={tableStyle}>
-              <thead>
-                <tr style={tableHeaderRowStyle}>
-                  <th style={thStyle}>JUFTLIK</th>
-                  <th style={thStyle}>TOMON</th>
-                  <th style={thStyle}>HAJM</th>
-                  <th style={thStyle}>KIRISH</th>
-                  <th style={thStyle}>STOP LOSS</th>
-                  <th style={thStyle}>TAKE PROFIT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {positions.map((pos, i) => (
-                  <tr key={i} style={tableRowStyle}>
-                    <td style={{ ...tdStyle, fontWeight: 'bold' }}>{pos[1]}</td>
-                    <td style={{ ...tdStyle, color: pos[2] === 'BUY' ? '#00e676' : '#ff5252', fontWeight: 'bold' }}>{pos[2]}</td>
-                    <td style={tdStyle}>{pos[3]}</td>
-                    <td style={tdStyle}>{pos[4].toFixed(2)}</td>
-                    <td style={{ ...tdStyle, color: '#ff5252' }}>{pos[5].toFixed(2)}</td>
-                    <td style={{ ...tdStyle, color: '#00e676' }}>{pos[6].toFixed(2)}</td>
+      <div className="bg-slate-800 rounded-2xl overflow-hidden shadow-lg">
+        <div className="p-4 bg-slate-700 font-bold text-xl">Ochiq Pozitsiyalar</div>
+        <div className="p-2 overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="text-slate-400 border-b border-slate-600">
+                <th className="p-3">Juftlik</th>
+                <th className="p-3">Tomon</th>
+                <th className="p-3">Foyda</th>
+                <th className="p-3">Harakat</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.positions.length === 0 ? (
+                <tr><td colSpan="4" className="p-6 text-center text-slate-500">Hozircha ochiq pozitsiyalar yo'q</td></tr>
+              ) : (
+                data.positions.map(pos => (
+                  <tr key={pos.id} className="border-b border-slate-700">
+                    <td className="p-3 font-bold">{pos.symbol}</td>
+                    <td className={`p-3 ${pos.side === 'BUY' ? 'text-green-400' : 'text-red-400'}`}>{pos.side}</td>
+                    <td className="p-3 font-mono">+{pos.profit}%</td>
+                    <td className="p-3">
+                      <button className="bg-red-500 p-2 rounded-lg text-sm">Yopish</button>
+                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Emergency Control */}
-      <div style={controlSectionStyle}>
-        <button
-          style={emergencyButtonStyle}
-          onLongPress={() => alert('Favqulodda to\'xtatish buyrug\'i yuborildi!')}
-          onClick={() => {
-            if(window.confirm("Barcha pozitsiyalarni yopish va tizimni to'xtatishga aminmisiz?")) {
-              fetch('http://localhost:8000/emergency_stop', { method: 'POST' });
-            }
-          }}
-        >
-          🆘 FAVQULODDA HAMMASINI YOPISH ( EMERGENCY STOP )
-        </button>
-        <p style={{ fontSize: '12px', color: '#8b949e', marginTop: '10px' }}>* Ushbu tugma barcha agentlarni to'xtatadi va Binance dagi ochiq orderlarni Market narxida yopadi.</p>
+      {/* Real-time Logs */}
+      <div className="mt-6 bg-black p-4 rounded-2xl font-mono text-xs h-40 overflow-y-auto border border-slate-700 text-green-500">
+        <div>[SYSTEM] SECURITY-BOBO A1 v1.0.0 boshlandi...</div>
+        <div>[PROFESSOR] BTC Gravity tahlil qilindi: BULLISH</div>
+        <div>[TITAN] Safe-Lock faol: 25.00 USDT qulflangan</div>
+        <div>[NAZORATCHI] Heartbeat: OK</div>
       </div>
     </div>
   );
-};
-
-// Styles
-const containerStyle = {
-  padding: '20px',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  backgroundColor: '#0d1117',
-  color: '#c9d1d9',
-  minHeight: '100vh',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '20px'
-};
-
-const headerStyle = {
-  textAlign: 'center',
-  padding: '20px 0',
-  borderBottom: '1px solid #30363d',
-  marginBottom: '10px'
-};
-
-const titleStyle = {
-  margin: 0,
-  fontSize: '28px',
-  letterSpacing: '1px',
-  color: '#2962ff'
-};
-
-const pulseIcon = {
-  width: '12px',
-  height: '12px',
-  backgroundColor: '#00e676',
-  borderRadius: '50%',
-  boxShadow: '0 0 0 0 rgba(0, 230, 118, 0.7)',
-  animation: 'pulse 1.5s infinite'
-};
-
-const statsGridStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-  gap: '20px'
-};
-
-const cardStyle = {
-  backgroundColor: '#161b22',
-  padding: '25px',
-  borderRadius: '16px',
-  border: '1px solid #30363d',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-  transition: 'transform 0.2s ease'
-};
-
-const cardLabelStyle = {
-  fontSize: '12px',
-  color: '#8b949e',
-  margin: '0 0 10px 0',
-  fontWeight: '600'
-};
-
-const cardValueStyle = {
-  margin: 0,
-  fontSize: '32px',
-  fontWeight: '700'
-};
-
-const symbolsContainerStyle = {
-  display: 'flex',
-  gap: '10px',
-  flexWrap: 'wrap',
-  justifyContent: 'center'
-};
-
-const symbolBadgeStyle = {
-  backgroundColor: '#21262d',
-  padding: '8px 16px',
-  borderRadius: '20px',
-  fontSize: '14px',
-  border: '1px solid #30363d'
-};
-
-const tableCardStyle = {
-  backgroundColor: '#161b22',
-  padding: '20px',
-  borderRadius: '16px',
-  border: '1px solid #30363d',
-  flex: 1
-};
-
-const tableStyle = {
-  width: '100%',
-  borderCollapse: 'collapse'
-};
-
-const tableHeaderRowStyle = {
-  borderBottom: '2px solid #30363d'
-};
-
-const thStyle = {
-  textAlign: 'left',
-  padding: '15px',
-  fontSize: '12px',
-  color: '#8b949e',
-  textTransform: 'uppercase'
-};
-
-const tableRowStyle = {
-  borderBottom: '1px solid #21262d'
-};
-
-const tdStyle = {
-  padding: '15px',
-  fontSize: '16px'
-};
-
-const controlSectionStyle = {
-  textAlign: 'center',
-  padding: '20px'
-};
-
-const emergencyButtonStyle = {
-  width: '100%',
-  maxWidth: '600px',
-  padding: '25px',
-  backgroundColor: '#da3633',
-  color: 'white',
-  border: 'none',
-  borderRadius: '20px',
-  fontSize: '20px',
-  fontWeight: '800',
-  cursor: 'pointer',
-  boxShadow: '0 8px 0 #8e2a27',
-  transition: 'all 0.1s active'
 };
 
 export default Dashboard;

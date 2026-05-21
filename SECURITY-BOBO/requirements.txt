@@ -3,5 +3,6 @@ pandas
 numpy
 fastapi
 uvicorn
+python-telegram-bot
+pyTelegramBotAPI
 requests
-python-dotenv

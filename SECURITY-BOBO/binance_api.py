@@ -3,83 +3,92 @@ import config
 import logging
 import pandas as pd
 
-# Binance API bilan aloqa moduli
-# ccxt kutubxonasi orqali Futures savdosi amalga oshiriladi
+# SECURITY-BOBO Binance API Interfeysi
+# Funding Rate, Order Book va Likvidatsiyalarni qo'llab-quvvatlaydi
 
 class BinanceClient:
     def __init__(self):
-        self.client = ccxt.binance({
+        self.exchange = ccxt.binance({
             'apiKey': config.BINANCE_API_KEY,
             'secret': config.BINANCE_SECRET_KEY,
             'options': {'defaultType': 'future'},
             'enableRateLimit': True
         })
-        self.logger = logging.getLogger("BinanceAPI")
+        self.logger = logging.getLogger("BinanceClient")
 
     def fetch_ohlcv(self, symbol, timeframe='15m', limit=100):
-        """Sham ma'lumotlarini olish va DataFrame ga o'tkazish"""
+        """Sham ma'lumotlarini olish"""
         try:
-            ohlcv = self.client.fetch_ohlcv(symbol, timeframe, limit=limit)
-            if not ohlcv:
-                return None
+            ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
             df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-            # Vaqtni o'qiladigan formatga o'tkazish
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
             return df
         except Exception as e:
-            self.logger.error(f"OHLCV olishda xatolik: {e}")
+            self.logger.error(f"OHLCV olishda xatolik ({symbol}): {e}")
             return None
 
     def get_balance(self):
         """USDT balansini olish"""
         try:
-            balance = self.client.fetch_balance()
-            return balance['total'].get('USDT', 0)
-        except Exception as e:
-            self.logger.error(f"Balans olishda xatolik: {e}")
-            return 0
+            balance = self.exchange.fetch_balance()
+            return float(balance['total']['USDT'])
+        except:
+            return 0.0
 
-    def open_order(self, symbol, side, amount, params={}):
-        """Order ochish"""
+    def get_funding_rate(self, symbol):
+        """Binance Funding Rate Radar (Rule 8)"""
         try:
-            # Miqdorni aniqlashtirish (Precision)
-            order = self.client.create_order(symbol, 'market', side, amount, params=params)
-            return order
-        except Exception as e:
-            self.logger.error(f"Order ochishda xatolik: {e}")
+            funding = self.exchange.fetch_funding_rate(symbol)
+            return funding['fundingRate']
+        except:
+            return 0.0
+
+    def get_order_book(self, symbol, limit=20):
+        """Order Book ma'lumotlari (Spoofing Guard uchun)"""
+        try:
+            return self.exchange.fetch_order_book(symbol, limit)
+        except:
             return None
 
-    def get_open_positions(self, symbol=None):
-        """Ochiq pozitsiyalarni olish"""
+    def get_open_positions(self):
+        """Barcha ochiq pozitsiyalarni olish (Auto-Resume uchun)"""
         try:
-            positions = self.client.fetch_positions(symbols=[symbol] if symbol else None)
-            # Faqat ochiq (miqdori 0 dan katta) pozitsiyalarni qaytarish
-            active_positions = []
-            for p in positions:
-                if float(p.get('contracts', 0)) > 0:
-                    active_positions.append(p)
-            return active_positions
-        except Exception as e:
-            self.logger.error(f"Pozitsiyalarni olishda xatolik: {e}")
+            positions = self.exchange.fetch_positions()
+            return [p for p in positions if float(p['contracts']) > 0]
+        except:
             return []
+
+    def open_order(self, symbol, side, amount, params={}):
+        """Buyruq yuborish (Rule 13: Maker/Limit optimizatsiyasi)"""
+        try:
+            # Agar limit order bo'lsa, joriy narxdan biroz yaxshiroq narx qo'yish
+            ticker = self.exchange.fetch_ticker(symbol)
+            price = ticker['ask'] if side == 'buy' else ticker['bid']
+
+            order = self.exchange.create_order(
+                symbol=symbol,
+                type='limit' if config.USE_LIMIT_ORDERS else 'market',
+                side=side,
+                amount=amount,
+                price=price if config.USE_LIMIT_ORDERS else None,
+                params=params
+            )
+            return order
+        except Exception as e:
+            self.logger.error(f"Order yuborishda xatolik: {e}")
+            return None
 
     def set_leverage(self, symbol, leverage):
         """Yelkani sozlash"""
         try:
-            # Symbol formatini Binance API ga moslash (masalan BTC/USDT -> BTCUSDT)
-            clean_symbol = symbol.replace("/", "")
-            self.client.fapiPrivate_post_leverage({
-                "symbol": clean_symbol,
-                "leverage": int(leverage)
-            })
-        except Exception as e:
-            self.logger.error(f"Leverage sozlashda xatolik: {e}")
+            self.exchange.set_leverage(leverage, symbol)
+        except:
+            pass
 
     def get_ticker(self, symbol):
         """Joriy narxni olish"""
         try:
-            ticker = self.client.fetch_ticker(symbol)
+            ticker = self.exchange.fetch_ticker(symbol)
             return ticker['last']
-        except Exception as e:
-            self.logger.error(f"Ticker olishda xatolik: {e}")
+        except:
             return None

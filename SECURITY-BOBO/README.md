@@ -1,41 +1,37 @@
-# 🤖 SECURITY-BOBO v5.0 GODMODE
+# SECURITY-BOBO A1: 30-Rule Evolutionary AI System
 
-Ushbu tizim **Binance USDT-M Futures** tarmog'ida avtomatlashtirilgan savdo qilish uchun mo'ljallangan 5-Agentli (Swarm) mega tizimdir.
+Bu tizim Binance USDT-M Futures bozorida avtonom savdo qilish uchun mo'ljallangan 5 ta agentdan tashkil topgan evolyutsion AI arxitekturasidir.
 
-## 🌟 Asosiy Xususiyatlar
-- **5-Agent Arxitekturasi:** Professor, Titan, Mergan, Boss va Nazoratchi.
-- **Strategiya:** SMC, ICT, SATS va TQI algoritmlarining Python'dagi mukammal kombinatsiyasi.
-- **Auto-Resume:** Internet yoki elektr uzilsa, tizim qayta ishga tushganda ochiq pozitsiyalarni darhol tanib oladi.
-- **Touch-First Dashboard:** Planshet va sensorli noutbuklar uchun mo'ljallangan zamonaviy interfeys.
-- **Telegram Notifier:** Barcha savdolar haqida real vaqtda O'zbek tilida xabarnomalar.
+## 🚀 Xususiyatlari
+- **5 Avtonom Agent:** Professor, Titan, Mergan, Boss, Nazoratchi.
+- **30 evolyutsion qoida:** SMC, ICT, TQI, Wyckoff va risk boshqaruvi.
+- **Touch-First Dashboard:** Winlator va planshetlar uchun optimallashtirilgan.
+- **Auto-Resume:** Tizim o'chib qolganda ochiq pozitsiyalarni avtomatik tiklash.
+- **O'zbek tilida:** Barcha loglar, xabarlar va interfeys ona tilimizda.
 
-## 📂 Fayl Strukturasi (17 ta fayl)
-1. `binance_brain.py` - Tizim markazi.
-2. `professor.py` - Analiz agenti.
-3. `titan.py` - Risk boshqaruvchisi.
-4. `mergan.py` - Ijro etuvchi agent.
-5. `boss.py` - Monitoring va tiklanish.
-6. `nazoratchi.py` - Evolyutsiya markazi.
-7. `indicators.py` - TQI/SATS/SMC algoritmlari.
-8. `binance_api.py` - Binance API (ccxt).
-9. `telegram_bot.py` - Telegram xabarnomalar.
+## 📁 Fayllar strukturasi (17 ta fayl)
+1. `binance_brain.py` - Markaziy yadro.
+2. `professor.py` - Tahlil agenti.
+3. `titan.py` - Risk agenti.
+4. `mergan.py` - Ijro agenti.
+5. `boss.py` - Pozitsiya boshqaruvchisi.
+6. `nazoratchi.py` - Xavfsizlik va evolyutsiya.
+7. `config.py` - Markaziy sozlamalar.
+8. `indicators.py` - Texnik ko'rsatkichlar (TQI, SATS).
+9. `binance_api.py` - Binance API interfeysi.
 10. `database.py` - SQLite bazasi.
-11. `config.py` - Sozlamalar.
-12. `utils.py` - Yordamchi funksiyalar.
-13. `dashboard_server.py` - Backend API.
-14. `frontend/Dashboard.jsx` - UI kodi.
-15. `requirements.txt` - Kutubxonalar.
-16. `test_system.py` - Testlar.
+11. `telegram_bot.py` - Telegram xabarnoma va boshqaruv.
+12. `dashboard_server.py` - Dashboard backend.
+13. `frontend/Dashboard.jsx` - Dashboard frontend.
+14. `utils.py` - Yordamchi funksiyalar.
+15. `test_system.py` - Unit testlar.
+16. `requirements.txt` - Kerakli kutubxonalar.
 17. `README.md` - Ushbu qo'llanma.
 
-## 🚀 Ishga tushirish
-1. `requirements.txt` orqali kerakli kutubxonalarni yuklang: `pip install -r requirements.txt`
-2. `config.py` fayliga Binance API va Telegram tokenlaringizni kiriting.
+## 🛠 O'rnatish
+1. Kutubxonalarni o'rnating: `pip install -r requirements.txt`
+2. `config.py` fayliga API kalitlarni kiriting.
 3. Tizimni ishga tushiring: `python binance_brain.py`
-4. Dashboardni ko'rish uchun: `python dashboard_server.py` va brauzerda `localhost:8000` ga kiring.
 
 ## ⚠️ Ogohlantirish
-Ushbu tizim agressiv savdo strategiyasidan foydalanadi. Savdo qilishdan oldin har doim test rejimida sinab ko'ring.
-
-**Muallif:** BOBO AKAM
-**Versiya:** 5.0.0 GODMODE
+Ushbu dastur faqat ta'lim va tahlil maqsadida yaratilgan. Moliyaviy savdo yuqori riskka ega.
